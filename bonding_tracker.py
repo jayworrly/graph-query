@@ -1,10 +1,14 @@
 import psycopg2
 from web3 import Web3
 from datetime import datetime
+from dotenv import load_dotenv
 import time
 import os
 import logging
 from multiprocessing import Pool
+
+# Load environment variables
+load_dotenv()
 
 print("Starting Bonding Tracker...")
 
@@ -50,11 +54,11 @@ class BondingTracker:
         """Get database connection"""
         try:
             return psycopg2.connect(
-                dbname="avalanche_tokens",
-                user="postgres", 
-                password="JJ+blue1014",
-                host="localhost",
-                port="5432"
+                dbname=os.getenv('DB_NAME', 'avalanche_tokens'),
+                user=os.getenv('DB_USER', 'postgres'),
+                password=os.getenv('DB_PASSWORD'),
+                host=os.getenv('DB_HOST', 'localhost'),
+                port=os.getenv('DB_PORT', '5432')
             )
         except Exception as e:
             logging.error(f"Database connection error: {str(e)}")
