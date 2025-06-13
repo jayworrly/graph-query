@@ -54,51 +54,16 @@ class BondingTracker:
         """Get database connection"""
         try:
             return psycopg2.connect(
-                dbname=os.getenv('DB_NAME', 'avalanche_tokens'),
-                user=os.getenv('DB_USER', 'postgres'),
+                dbname=os.getenv('DB_NAME'),
+                user=os.getenv('DB_USER'),
                 password=os.getenv('DB_PASSWORD'),
-                host=os.getenv('DB_HOST', 'localhost'),
-                port=os.getenv('DB_PORT', '5432')
+                host=os.getenv('DB_HOST'),
+                port=os.getenv('DB_PORT')
             )
         except Exception as e:
             logging.error(f"Database connection error: {str(e)}")
             return None
             
-    def _ensure_columns(self):
-        """Ensure required columns exist"""
-        conn = self._get_db_connection()
-        if not conn:
-            return False
-            
-        try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT column_name FROM information_schema.columns 
-                    WHERE table_name = 'token_deployments' 
-                    AND column_name IN ('lp_deployed', 'pair_address', 'bonded_at', 'bonding_error', 'bonded_block_number');
-                """)
-                existing = {row[0] for row in cur.fetchall()}
-                
-                columns_to_add = {
-                    'lp_deployed': 'BOOLEAN DEFAULT FALSE',
-                    'pair_address': 'VARCHAR(42)',
-                    'bonded_at': 'TIMESTAMP',
-                    'bonding_error': 'TEXT',
-                    'bonded_block_number': 'BIGINT'
-                }
-                
-                for col, definition in columns_to_add.items():
-                    if col not in existing:
-                        cur.execute(f"ALTER TABLE token_deployments ADD COLUMN {col} {definition};")
-                
-                conn.commit()
-                return True
-        except Exception as e:
-            logging.error(f"Error ensuring columns: {str(e)}")
-            return False
-        finally:
-            conn.close()
-    
     def _find_pair_creation_block(self, token_address, deployment_block, current_block):
         """Find block where pair was created"""
         try:
@@ -300,8 +265,6 @@ class BondingTracker:
     
     def run(self, hours_back=24):
         """Main execution method - uses efficient event scanning first"""
-        self._ensure_columns()
-        
         # First try the super efficient event scanning approach
         if self.scan_pair_events():
             print("Event scanning completed successfully")
