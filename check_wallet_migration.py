@@ -34,6 +34,6 @@ def check_wallet_migration(wallet_address):
     cur.close()
     conn.close()
 
-if __name__ == "__main__":
-    wallet = "0x1e320A12935461Bd2FB62f91bfADb019038c2eF6"
-    check_wallet_migration(wallet) 
+    if __name__ == "__main__":
+        wallet_address = input("Enter wallet address: ")
+        check_wallet_migration(wallet_address)

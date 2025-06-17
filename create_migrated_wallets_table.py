@@ -8,7 +8,7 @@ import requests
 load_dotenv()
 
 # Set up The Graph endpoint from .env
-SUBGRAPH_URL = os.getenv('SUBGRAPH_URL') or 'https://api.studio.thegraph.com/query/18408/signer-tracker/version/latest'
+SUBGRAPH_URL = os.getenv('SUBGRAPH_URL')
 
 # Function to fetch all migrations using cursor-based pagination (id_gt)
 def fetch_all_migrations_cursor(subgraph_url, batch_size=1000):

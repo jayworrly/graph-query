@@ -483,8 +483,7 @@ def main() -> None:
     
     # Get subgraph URL from args, environment, or use default
     subgraph_url = (args.subgraph_url or 
-                   os.getenv('SUBGRAPH_URL') or 
-                   'https://api.studio.thegraph.com/query/18408/signer-tracker/version/latest')
+                   os.getenv('SUBGRAPH_URL'))
     
     logging.info(f"Using subgraph URL: {subgraph_url}")
     
