@@ -1,6 +1,11 @@
+import os
 import requests
+from dotenv import load_dotenv
 from typing import List, Dict, Optional
 import time
+
+# Load environment variables
+load_dotenv()
 
 def get_token_market_data(token_addresses: List[str], chain_id: str = "avalanche") -> Optional[Dict]:
     """
@@ -71,9 +76,3 @@ def get_token_market_data(token_addresses: List[str], chain_id: str = "avalanche
     except Exception:
         return None
 
-if __name__ == "__main__":
-    test_addresses = [
-        "0x34a528Da3b2EA5c6Ad1796Eba756445D1299a577",
-        "0x5431026129Fb6F60c93a525972e6663BFa55AAA3"
-    ]
-    result = get_token_market_data(test_addresses) 

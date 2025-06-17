@@ -86,20 +86,7 @@ cur = conn.cursor()
 cur.execute("SELECT user_address, twitter_username FROM arena_users")
 arena_usernames = {row[0].lower(): row[1] for row in cur.fetchall()}
 
-# 3. Create the new table with both original and users wallet, and usernames
-cur.execute("""
-CREATE TABLE IF NOT EXISTS migrated_wallets (
-    id SERIAL PRIMARY KEY,
-    original_wallet VARCHAR(42) NOT NULL,
-    users_wallet VARCHAR(42) NOT NULL,
-    original_username VARCHAR(255),
-    users_username VARCHAR(255),
-    UNIQUE (original_wallet, users_wallet)
-)
-""")
-conn.commit()
-
-# 4. Insert all migrations, labeling and adding usernames if in arena_users
+# 3. Insert all migrations, labeling and adding usernames if in arena_users
 for migration in migration_map.values():
     original_wallet = migration['old_address']
     users_wallet = migration['new_address']
@@ -116,4 +103,4 @@ conn.commit()
 cur.close()
 conn.close()
 
-print("migrated_wallets table created and populated with usernames.") 
+print("migrated_wallets table populated with usernames.") 

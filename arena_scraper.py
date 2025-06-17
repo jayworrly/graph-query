@@ -376,119 +376,59 @@ class ArenaScraper:
             self.db.close()
 
 class Database:
-    """Database operations for Arena.trade scraper"""
+    """Database connection and operations"""
     
     def __init__(self):
         """Initialize database connection"""
-        self.conn = self._connect()
-        self._ensure_table()
+        self.conn = None
+        self._connect()
     
     def _connect(self) -> psycopg2.extensions.connection:
         """Create database connection"""
         try:
-            return psycopg2.connect(
-                host=os.getenv('DB_HOST'),
-                port=os.getenv('DB_PORT'),
+            self.conn = psycopg2.connect(
                 dbname=os.getenv('DB_NAME'),
                 user=os.getenv('DB_USER'),
-                password=os.getenv('DB_PASSWORD')
+                password=os.getenv('DB_PASSWORD'),
+                host=os.getenv('DB_HOST'),
+                port=os.getenv('DB_PORT')
             )
+            return self.conn
         except Exception as e:
             logging.error(f"Database connection error: {str(e)}")
             raise
     
-    def _ensure_table(self) -> None:
-        """Ensure the arena_users table exists with all required columns."""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS arena_users (
-                id SERIAL PRIMARY KEY,
-                user_address VARCHAR(42) UNIQUE,
-                group_wallet VARCHAR(42),
-                original_address VARCHAR(42),
-                is_migrated BOOLEAN DEFAULT FALSE,
-                twitter_handle VARCHAR(255),
-                twitter_id VARCHAR(255),
-                twitter_name VARCHAR(255),
-                twitter_username VARCHAR(255),
-                twitter_description TEXT,
-                twitter_profile_image_url TEXT,
-                twitter_verified BOOLEAN,
-                twitter_followers_count INTEGER,
-                twitter_following_count INTEGER,
-                twitter_tweet_count INTEGER,
-                twitter_listed_count INTEGER,
-                twitter_created_at TIMESTAMP,
-                twitter_updated_at TIMESTAMP,
-                last_price NUMERIC,
-                traders_holding INTEGER,
-                portfolio_total_pnl NUMERIC,
-                last_updated TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            
-            -- Add migration tracking columns if they don't exist
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                             WHERE table_name = 'arena_users' AND column_name = 'original_address') THEN
-                    ALTER TABLE arena_users ADD COLUMN original_address VARCHAR(42);
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                             WHERE table_name = 'arena_users' AND column_name = 'is_migrated') THEN
-                    ALTER TABLE arena_users ADD COLUMN is_migrated BOOLEAN DEFAULT FALSE;
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                             WHERE table_name = 'arena_users' AND column_name = 'last_price') THEN
-                    ALTER TABLE arena_users ADD COLUMN last_price NUMERIC;
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                             WHERE table_name = 'arena_users' AND column_name = 'traders_holding') THEN
-                    ALTER TABLE arena_users ADD COLUMN traders_holding INTEGER;
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                             WHERE table_name = 'arena_users' AND column_name = 'portfolio_total_pnl') THEN
-                    ALTER TABLE arena_users ADD COLUMN portfolio_total_pnl NUMERIC;
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                             WHERE table_name = 'arena_users' AND column_name = 'last_updated') THEN
-                    ALTER TABLE arena_users ADD COLUMN last_updated TIMESTAMP;
-                END IF;
-            END $$;
-            
-            -- Create indexes
-            CREATE INDEX IF NOT EXISTS idx_arena_users_original_address 
-            ON arena_users(original_address);
-            
-            CREATE INDEX IF NOT EXISTS idx_arena_users_is_migrated 
-            ON arena_users(is_migrated);
-            
-            CREATE INDEX IF NOT EXISTS idx_arena_users_user_address 
-            ON arena_users(user_address);
-        """)
-        self.conn.commit()
-        cursor.close()
-    
     def upsert_users(self, users: List[Dict[str, Any]]) -> None:
         """Upsert user data into database"""
+        if not users:
+            return
+            
         try:
             with self.conn.cursor() as cur:
+                # Prepare data for upsert
+                values = []
+                for user in users:
+                    values.append((
+                        user['user_address'],
+                        user['twitter_handle'],
+                        user['twitter_username'],
+                        user['twitter_pfp_url'],
+                        user['last_price'],
+                        user['traders_holding'],
+                        user['portfolio_total_pnl'],
+                        user['last_updated'],
+                        user.get('original_address'),
+                        user.get('is_migrated', False)
+                    ))
+                
+                # Upsert users
                 execute_values(cur, """
                     INSERT INTO arena_users (
-                        user_address, group_wallet, original_address, is_migrated,
-                        twitter_handle, twitter_username, twitter_pfp_url,
-                        last_price, traders_holding, portfolio_total_pnl, last_updated
+                        user_address, twitter_handle, twitter_username, twitter_pfp_url,
+                        last_price, traders_holding, portfolio_total_pnl, last_updated,
+                        original_address, is_migrated
                     ) VALUES %s
                     ON CONFLICT (user_address) DO UPDATE SET
-                        group_wallet = EXCLUDED.group_wallet,
-                        original_address = EXCLUDED.original_address,
-                        is_migrated = EXCLUDED.is_migrated,
                         twitter_handle = EXCLUDED.twitter_handle,
                         twitter_username = EXCLUDED.twitter_username,
                         twitter_pfp_url = EXCLUDED.twitter_pfp_url,
@@ -496,46 +436,30 @@ class Database:
                         traders_holding = EXCLUDED.traders_holding,
                         portfolio_total_pnl = EXCLUDED.portfolio_total_pnl,
                         last_updated = EXCLUDED.last_updated,
-                        updated_at = CURRENT_TIMESTAMP
-                """, [(
-                    user['user_address'],
-                    user.get('group_wallet', None),
-                    user.get('original_address', None),
-                    user.get('is_migrated', False),
-                    user['twitter_handle'],
-                    user['twitter_username'],
-                    user['twitter_pfp_url'],
-                    user['last_price'],
-                    user['traders_holding'],
-                    user['portfolio_total_pnl'],
-                    user['last_updated']
-                ) for user in users])
+                        original_address = EXCLUDED.original_address,
+                        is_migrated = EXCLUDED.is_migrated
+                """, values)
+                
                 self.conn.commit()
+                
         except Exception as e:
             logging.error(f"Error upserting users: {str(e)}")
             self.conn.rollback()
             raise
     
     def get_missing_addresses(self, addresses: List[str]) -> List[str]:
-        """Get addresses that are not in the database"""
+        """Get list of addresses not in database"""
         try:
             with self.conn.cursor() as cur:
-                # Convert to lowercase for comparison
-                addresses_lower = [addr.lower() for addr in addresses]
-                
                 cur.execute("""
-                    SELECT LOWER(user_address) as addr
-                    FROM arena_users 
-                    WHERE LOWER(user_address) = ANY(%s)
-                """, (addresses_lower,))
-                
-                existing = set(row[0] for row in cur.fetchall())
-                missing = [addr for addr in addresses if addr.lower() not in existing]
-                
-                return missing
+                    SELECT user_address FROM arena_users 
+                    WHERE user_address = ANY(%s)
+                """, (addresses,))
+                existing = {row[0] for row in cur.fetchall()}
+                return [addr for addr in addresses if addr not in existing]
         except Exception as e:
-            logging.error(f"Error checking missing addresses: {str(e)}")
-            return addresses  # Return all if error
+            logging.error(f"Error getting missing addresses: {str(e)}")
+            return addresses
     
     def close(self) -> None:
         """Close database connection"""

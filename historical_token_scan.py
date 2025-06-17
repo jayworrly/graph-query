@@ -79,7 +79,8 @@ class TokenScanner:
                     return w3
             except:
                 continue
-        raise Exception("Failed to connect to any RPC endpoint")
+        print("Failed to connect to any RPC endpoint")
+        return None
     
     def _get_db_connection(self):
         """Get database connection"""
@@ -134,30 +135,71 @@ class TokenScanner:
                 conn.rollback()
                 return False
     
-    def _manage_scan_progress(self, block_number=None):
-        """Get or update last processed block"""
+    def _create_scan_progress_table(self):
+        """Create scan_progress table if it doesn't exist"""
         conn = self._get_db_connection()
         if not conn:
-            return 63418307 if block_number is None else False
+            return False
             
         with conn.cursor() as cur:
             try:
-                # Create table if not exists
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS scan_progress (
                         id SERIAL PRIMARY KEY,
-                        last_block_scanned BIGINT,
+                        last_block_scanned BIGINT NOT NULL,
                         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
-                
+                conn.commit()
+                return True
+            except Exception as e:
+                logging.error(f"Error creating scan_progress table: {str(e)}")
+                return False
+            finally:
+                conn.close()
+    
+    def _get_latest_deployment_block(self):
+        """Get the latest block number from token_deployments table"""
+        conn = self._get_db_connection()
+        if not conn:
+            return None
+            
+        with conn.cursor() as cur:
+            try:
+                cur.execute("SELECT MAX(block_number) FROM token_deployments")
+                latest_block = cur.fetchone()[0]
+                return latest_block
+            except Exception as e:
+                logging.error(f"Error getting latest deployment block: {str(e)}")
+                return None
+            finally:
+                conn.close()
+    
+    def _manage_scan_progress(self, block_number=None):
+        """Get or update last processed block"""
+        # Ensure scan_progress table exists
+        if not self._create_scan_progress_table():
+            return None
+
+        conn = self._get_db_connection()
+        if not conn:
+            return None
+            
+        with conn.cursor() as cur:
+            try:
                 if block_number is None:  # Get last block
                     cur.execute("SELECT last_block_scanned FROM scan_progress ORDER BY id DESC LIMIT 1")
                     result = cur.fetchone()
                     if not result:
-                        cur.execute("INSERT INTO scan_progress (last_block_scanned) VALUES (%s)", (63418307,))
-                        conn.commit()
-                        return 63418307
+                        # Get the latest block from token_deployments table
+                        latest_block = self._get_latest_deployment_block()
+                        if latest_block:
+                            cur.execute("INSERT INTO scan_progress (last_block_scanned) VALUES (%s)", (latest_block,))
+                            conn.commit()
+                            return latest_block
+                        else:
+                            logging.error("No token deployments found in database")
+                            return None
                     return result[0]
                 else:  # Update last block
                     cur.execute("""
@@ -167,8 +209,9 @@ class TokenScanner:
                     """, (block_number,))
                     conn.commit()
                     return True
-            except:
-                return 63418307 if block_number is None else False
+            except Exception as e:
+                logging.error(f"Error managing scan progress: {str(e)}")
+                return None
             finally:
                 conn.close()
     
