@@ -1,3 +1,41 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+.next
+**/.next/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Local env files
+.env*.local
+.env
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache directories
+.cache/
+**/.cache/
+**/cache/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -5,29 +43,32 @@ __pycache__/
 *.so
 .Python
 env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
+venv/
+ENV/
+env.bak/
+venv.bak/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Environment variables
-.env
-
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
+*~
 
-# Logs
-*.log 
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large binary files
+*.node
+*.dll
+*.exe
+*.dmg 
