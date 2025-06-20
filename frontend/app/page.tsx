@@ -1,30 +1,34 @@
 import StatsCards from './components/StatsCards'
 import VolumeChart from './components/VolumeChart'
 import TopPerformers from './components/TopPerformers'
+import ArenaOverview from './components/ArenaOverview'
+import TokenLaunchMetrics from './components/TokenLaunchMetrics'
+import MigrationTracker from './components/MigrationTracker'
+import ProtocolComparison from './components/ProtocolComparison'
 
 export default function Dashboard() {
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Ballistic Terminal Launcher
-        </h1>
-        <p className="text-gray-400">
-          High-velocity token launches and analytics on Avalanche
-        </p>
-      </div>
+      {/* Arena Overview - Main TVL/Volume Stats */}
+      <ArenaOverview />
 
-      {/* Stats Cards */}
-      <StatsCards />
+      {/* Key Metrics Grid - Now handled by ArenaOverview component */}
 
-      {/* Charts and Tables */}
+      {/* Main Chart Section */}
+      <TokenLaunchMetrics />
+
+      {/* Data Sections Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+        {/* Left Column - 2/3 width */}
+        <div className="lg:col-span-2 space-y-8">
           <VolumeChart />
+          <MigrationTracker />
         </div>
-        <div>
+        
+        {/* Right Column - 1/3 width */}
+        <div className="space-y-8">
           <TopPerformers />
+          <ProtocolComparison />
         </div>
       </div>
     </div>

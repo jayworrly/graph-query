@@ -4,44 +4,45 @@ import PulseTable from '../components/PulseTable'
 
 export default function Explore() {
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Explore Tokens
-          </h1>
-          <p className="text-gray-400">
-            Discover new pairs, track migrations, and explore token opportunities
-          </p>
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
+      {/* Header - Fixed with Axiom Trade styling */}
+      <div className="flex-shrink-0 border-b border-primaryStroke overflow-hidden flex flex-row w-full h-[64px] px-[24px] justify-between sm:justify-start items-center">
+        <div className="flex flex-row flex-shrink-0 gap-[12px] justify-start items-center">
+          <div className="flex flex-col gap-[2px] justify-start items-start">
+            <h1 className="text-textPrimary text-[18px] font-medium tracking-[-0.02em]">
+              Explore Tokens
+            </h1>
+            <p className="text-textTertiary text-[12px] font-medium">
+              Discover new pairs, track migrations, and explore opportunities
+            </p>
+          </div>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-3 py-2">
-            <input
-              type="text"
-              placeholder="Search tokens..."
-              className="bg-transparent text-sm text-white placeholder-gray-400 border-none outline-none w-48"
-            />
+        <div className="flex flex-row gap-[12px] justify-end items-center">
+          {/* Refresh Button */}
+          <div className="flex items-center justify-center w-[32px] h-[32px] rounded-[4px] transition-colors duration-150 ease-in-out text-textSecondary hover:bg-primaryStroke/40 cursor-pointer">
+            <i className="ri-refresh-line text-[16px]"></i>
           </div>
-          <button className="p-2 text-gray-400 hover:text-purple-400 transition-colors">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+          
+          {/* Settings Button */}
+          <div className="flex items-center justify-center w-[32px] h-[32px] rounded-[4px] transition-colors duration-150 ease-in-out text-textSecondary hover:bg-primaryStroke/40 cursor-pointer">
+            <i className="ri-settings-3-line text-[16px]"></i>
+          </div>
         </div>
       </div>
 
-      {/* All Three Tables in Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="space-y-4">
-          <PulseTable type="new-pairs" />
-        </div>
-        <div className="space-y-4">
-          <PulseTable type="close-to-migration" />
-        </div>
-        <div className="space-y-4">
-          <PulseTable type="migrated" />
+      {/* Tables Grid - Scrollable Content */}
+      <div className="flex-1 p-[12px] min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-[12px] h-full">
+          <div className="min-h-0 flex flex-col">
+            <PulseTable type="new-pairs" />
+          </div>
+          <div className="min-h-0 flex flex-col">
+            <PulseTable type="close-to-migration" />
+          </div>
+          <div className="min-h-0 flex flex-col">
+            <PulseTable type="migrated" />
+          </div>
         </div>
       </div>
     </div>

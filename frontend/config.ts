@@ -15,5 +15,22 @@ export const config = {
     traderjoe: '0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10',
     pangolin: '0xefa94DE7a4656D787667C749f7E1223D71E9FD88',
     sushiswap: '0xc35DADB65012eC5796536bD9864eD8773aBc74C4'
-  }
+  },
+
+  avalancheRpcUrl: process.env.AVALANCHE_RPC_URL || 'https://api.avax.network/ext/bc/C/rpc',
+  arenaTokenFactoryAddress: process.env.ARENA_TOKEN_FACTORY_ADDRESS || '0x8315f1eb449Dd4B779495C3A0b05e5d194446c6e',
+  arenaPairFactoryAddress: process.env.ARENA_PAIR_FACTORY_ADDRESS || '0xF16784dcAf838a3e16bEF7711a62D12413c39BD1',
+  dexScreenerApiUrl: 'https://api.dexscreener.com/latest/dex',
+  
+  // Database configuration
+  database: {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'arena',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'password',
+  },
+  
+  // Arena Subgraph endpoint
+  arenaSubgraphUrl: process.env.ARENA_SUBGRAPH_URL || 'https://api.studio.thegraph.com/query/18408/arena-tracker/v0.0.5'
 } 

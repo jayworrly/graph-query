@@ -8,6 +8,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Arena/Ballistic Color Palette
+        'background': '#0f0f23',
+        'backgroundSecondary': '#1a1a2e',
+        'backgroundTertiary': '#16213e',
+        'textPrimary': '#ffffff',
+        'textSecondary': '#e2e8f0',
+        'textTertiary': '#94a3b8',
+        'primaryStroke': '#475569',
+        'secondaryStroke': '#64748b',
+        'primaryBlue': '#a855f7',
+        'primaryBlueHover': '#9333ea',
+        'primaryPurple': '#9333ea',
+        'primaryLightBlue': '#c084fc',
+        'primaryGreen': '#22c55e',
+        'primaryYellow': '#f59e0b',
+        'virtualCurve': '#8b5cf6',
+        'pump': '#f59e0b',
+        'increase': '#22c55e',
+        'decrease': '#ef4444',
+        'hoverPrimary': '#1e293b',
         'ballistic': {
           50: '#faf5ff',
           100: '#f3e8ff',

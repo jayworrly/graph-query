@@ -19,12 +19,21 @@ dataSources:
         - TokenDeployment
         - BondingEvent
         - DailyStats
+        - UserActivity
+        - GlobalStats
+        - PriceSnapshot
       abis:
         - name: ArenaTokenFactory
           file: ./abis/ArenaTokenFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: TokenCreated(uint256,(uint128,uint16,uint8,bool,uint8,uint8,uint8,address,address,address),uint256)
           handler: handleTokenCreated
-        - event: TokenBonded(indexed address,indexed address,uint256,uint256,uint256)
-          handler: handleTokenBonded
+        - event: Buy(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256)
+          handler: handleBuy
+        - event: Sell(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256)
+          handler: handleSell
+        - event: TokenLPCreated(uint256,uint256,uint256,uint256)
+          handler: handleTokenLPCreated
       file: ./src/arena-token-factory.ts
