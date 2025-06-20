@@ -1,7 +1,47 @@
-type Upgraded @entity(immutable: true) {
-  id: Bytes!
-  implementation: Bytes! # address
+type TokenDeployment @entity(immutable: false) {
+  id: ID! # token address
+  tokenAddress: Bytes!
+  creator: Bytes!
+  tokenId: BigInt!
+  deployedAt: BigInt!
+  bondingProgress: BigDecimal!
+  migrationStatus: MigrationStatus!
+  totalVolume: BigInt!
+  totalTrades: Int!
+  
+  # Relations
+  bondingEvents: [BondingEvent!]! @derivedFrom(field: "token")
+}
+
+type BondingEvent @entity(immutable: true) {
+  id: ID! # txHash-logIndex
+  token: TokenDeployment!
+  user: Bytes!
+  avaxAmount: BigInt!
+  tokenAmount: BigInt!
+  bondingProgress: BigDecimal!
+  tradeType: TradeType!
+  timestamp: BigInt!
   blockNumber: BigInt!
-  blockTimestamp: BigInt!
   transactionHash: Bytes!
+}
+
+type DailyStats @entity(immutable: false) {
+  id: ID! # date
+  date: String!
+  totalTokens: Int!
+  totalVolume: BigInt!
+  totalTrades: Int!
+  uniqueTraders: Int!
+}
+
+enum MigrationStatus {
+  BONDING
+  CLOSE_TO_MIGRATION
+  MIGRATED
+}
+
+enum TradeType {
+  BUY
+  SELL
 }

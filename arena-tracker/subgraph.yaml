@@ -5,22 +5,26 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: UUPSProxy
+    name: ArenaTokenFactory
     network: avalanche
     source:
       address: "0x8315f1eb449Dd4B779495C3A0b05e5d194446c6e"
-      abi: UUPSProxy
+      abi: ArenaTokenFactory
       startBlock: 61473123
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
-        - Upgraded
+        - TokenDeployment
+        - BondingEvent
+        - DailyStats
       abis:
-        - name: UUPSProxy
-          file: ./abis/UUPSProxy.json
+        - name: ArenaTokenFactory
+          file: ./abis/ArenaTokenFactory.json
       eventHandlers:
-        - event: Upgraded(indexed address)
-          handler: handleUpgraded
-      file: ./src/uups-proxy.ts
+        - event: TokenCreated(uint256,(uint128,uint16,uint8,bool,uint8,uint8,uint8,address,address,address),uint256)
+          handler: handleTokenCreated
+        - event: TokenBonded(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleTokenBonded
+      file: ./src/arena-token-factory.ts

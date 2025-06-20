@@ -1,0 +1,98 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "name": "curveScaler",
+            "type": "uint128"
+          },
+          {
+            "name": "a",
+            "type": "uint16"
+          },
+          {
+            "name": "b",
+            "type": "uint8"
+          },
+          {
+            "name": "lpDeployed",
+            "type": "bool"
+          },
+          {
+            "name": "lpPercentage",
+            "type": "uint8"
+          },
+          {
+            "name": "salePercentage",
+            "type": "uint8"
+          },
+          {
+            "name": "creatorFeeBasisPoints",
+            "type": "uint8"
+          },
+          {
+            "name": "creatorAddress",
+            "type": "address"
+          },
+          {
+            "name": "pairAddress",
+            "type": "address"
+          },
+          {
+            "name": "tokenContractAddress",
+            "type": "address"
+          }
+        ],
+        "indexed": false,
+        "name": "params",
+        "type": "tuple"
+      },
+      {
+        "indexed": false,
+        "name": "tokenSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokenCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "avaxAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "tokenAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "bondingProgress",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokenBonded",
+    "type": "event"
+  }
+] 
