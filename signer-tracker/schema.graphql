@@ -1,9 +1,0 @@
-type SignerSet @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! # address
-  signer: Bytes! # address
-  previousSigner: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}

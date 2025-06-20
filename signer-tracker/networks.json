@@ -1,8 +1,0 @@
-{
-  "avalanche": {
-    "TransparentUpgradeableProxy": {
-      "address": "0xc605c2cf66ee98ea925b1bb4fea584b71c00cc4c",
-      "startBlock": 50719995
-    }
-  }
-}

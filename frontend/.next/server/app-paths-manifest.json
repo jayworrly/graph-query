@@ -1,0 +1,7 @@
+{
+  "/page": "app/page.js",
+  "/explore/page": "app/explore/page.js",
+  "/api/tokens/new-pairs/route": "app/api/tokens/new-pairs/route.js",
+  "/api/tokens/migrated/route": "app/api/tokens/migrated/route.js",
+  "/api/tokens/close-to-migration/route": "app/api/tokens/close-to-migration/route.js"
+}
