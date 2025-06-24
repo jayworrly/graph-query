@@ -95,6 +95,117 @@ type UserActivity @entity(immutable: false) {
   uniqueTokensTraded: Int!
   firstTradeTimestamp: BigInt!
   lastTradeTimestamp: BigInt!
+  
+  # Portfolio Tracking
+  currentPortfolioValueAvax: BigDecimal! # Current value of all holdings
+  totalInvestmentAvax: BigDecimal! # Total AVAX invested (buys - sells)
+  realizedPnLAvax: BigDecimal! # Actual profit/loss from completed trades
+  unrealizedPnLAvax: BigDecimal! # Current unrealized profit/loss
+  totalPnLAvax: BigDecimal! # Total P&L (realized + unrealized)
+  
+  # Performance Metrics
+  winRate: BigDecimal! # Percentage of profitable trades (0-100)
+  profitableTrades: Int! # Number of trades that made profit
+  losingTrades: Int! # Number of trades that lost money
+  averageProfitPerTrade: BigDecimal! # Average profit per winning trade
+  averageLossPerTrade: BigDecimal! # Average loss per losing trade
+  largestWinAvax: BigDecimal! # Biggest single trade profit
+  largestLossAvax: BigDecimal! # Biggest single trade loss
+  
+  # Risk Metrics
+  sharpeRatio: BigDecimal! # Risk-adjusted return metric
+  maxDrawdownAvax: BigDecimal! # Maximum portfolio drawdown
+  portfolioRoi: BigDecimal! # Return on investment percentage
+  
+  # Relations
+  tokenPositions: [UserTokenPosition!]! @derivedFrom(field: "user")
+}
+
+type UserTokenPosition @entity(immutable: false) {
+  id: ID! # user-token address
+  user: UserActivity!
+  token: TokenDeployment!
+  
+  # Current Holdings
+  currentBalance: BigDecimal! # Current token balance
+  currentValueAvax: BigDecimal! # Current value in AVAX
+  
+  # Trading History
+  totalBought: BigDecimal! # Total tokens bought
+  totalSold: BigDecimal! # Total tokens sold
+  totalBuyValueAvax: BigDecimal! # Total AVAX spent buying
+  totalSellValueAvax: BigDecimal! # Total AVAX received selling
+  
+  # Cost Basis & P&L
+  averageBuyPrice: BigDecimal! # Average price paid per token
+  averageSellPrice: BigDecimal! # Average price received per token
+  realizedPnLAvax: BigDecimal! # Profit/loss from sales
+  unrealizedPnLAvax: BigDecimal! # Current unrealized P&L
+  totalPnLAvax: BigDecimal! # Total P&L for this position
+  
+  # Position Metrics
+  percentOfPortfolio: BigDecimal! # What % of portfolio this represents
+  holdingPeriodDays: BigDecimal! # How long held on average
+  
+  # Trading Statistics
+  totalTrades: Int! # Total trades for this token
+  totalBuys: Int! # Total buy transactions
+  totalSells: Int! # Total sell transactions
+  isOpen: Boolean! # Whether position is still open (balance > 0)
+  
+  # Timestamps
+  firstBuyTimestamp: BigInt! # When first bought
+  lastBuyTimestamp: BigInt! # Most recent buy
+  lastSellTimestamp: BigInt! # Most recent sell
+  lastUpdateTimestamp: BigInt! # Last update
+}
+
+type UserPortfolioSnapshot @entity(immutable: true) {
+  id: ID! # user-timestamp
+  user: UserActivity!
+  
+  # Portfolio Value
+  totalValueAvax: BigDecimal!
+  totalInvestmentAvax: BigDecimal!
+  totalPnLAvax: BigDecimal!
+  
+  # Performance Metrics
+  portfolioRoi: BigDecimal!
+  winRate: BigDecimal!
+  
+  # Context
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  period: SnapshotPeriod! # HOURLY, DAILY
+  
+  # Number of active positions
+  activePositions: Int!
+  totalPositions: Int!
+}
+
+type UserTradingSession @entity(immutable: false) {
+  id: ID! # user-date
+  user: UserActivity!
+  date: String! # YYYY-MM-DD
+  
+  # Daily Trading Stats
+  tradesCount: Int!
+  volumeAvax: BigDecimal!
+  pnlAvax: BigDecimal!
+  feesSpent: BigDecimal!
+  
+  # Session Performance
+  winningTrades: Int!
+  losingTrades: Int!
+  breakEvenTrades: Int!
+  
+  # Best and Worst Trades
+  bestTradeAvax: BigDecimal!
+  worstTradeAvax: BigDecimal!
+  
+  # Timestamps
+  firstTradeTimestamp: BigInt!
+  lastTradeTimestamp: BigInt!
 }
 
 type DailyStats @entity(immutable: false) {

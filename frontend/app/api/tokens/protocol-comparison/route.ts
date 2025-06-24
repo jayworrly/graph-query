@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
     const arenaMarketShare = (arenaTVL / totalMarketTVL) * 100
 
     // Find Arena's position
-    const arenaRank = sortedProtocols.findIndex(p => p.isCurrentProtocol) + 1
+    const arenaRank = sortedProtocols.findIndex(p => 'isCurrentProtocol' in p && p.isCurrentProtocol) + 1
 
     return NextResponse.json({
       success: true,

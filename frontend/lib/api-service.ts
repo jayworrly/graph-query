@@ -4,9 +4,12 @@ export interface TokenData {
   symbol: string
   address: string
   price: number
+  priceUsd?: number
   change24h: number
   volume24h: number
+  volume24hUsd?: number
   marketCap: number
+  marketCapUsd?: number
   holders: number
   image: string
   tokenId: string
@@ -33,6 +36,8 @@ export interface TokenData {
   priceHigh24h?: number
   priceLow24h?: number
   avaxRaised?: number
+  avaxRaisedUsd?: number
+  liquidityUsd?: number
   migrationThreshold?: number
   lastTradeTimestamp?: number
 }
@@ -56,9 +61,12 @@ export class ApiService {
           symbol: token.symbol || 'UNKNOWN', // Real symbol from blockchain
           address: token.tokenAddress || token.address,
           price: parseFloat(token.currentPriceAvax || '0'),
+          priceUsd: parseFloat(token.currentPriceUsd || '0'),
           change24h: parseFloat(token.priceChange24h || '0'),
           volume24h: parseFloat(token.volume24h || '0'),
+          volume24hUsd: parseFloat(token.volume24hUsd || '0'),
           marketCap: parseFloat(token.marketCapAvax || '0'),
+          marketCapUsd: parseFloat(token.marketCapUsd || '0'),
           holders: parseInt(token.holders || '0'),
           image: this.getTokenFallbackImage(token.symbol || 'UNKNOWN'),
           tokenId: token.tokenId?.toString() || '0',
@@ -81,6 +89,7 @@ export class ApiService {
           priceHigh24h: parseFloat(token.priceHigh24h || '0'),
           priceLow24h: parseFloat(token.priceLow24h || '0'),
           avaxRaised: parseFloat(token.avaxRaised || '0'),
+          avaxRaisedUsd: parseFloat(token.avaxRaisedUsd || '0'),
           migrationThreshold: parseFloat(token.migrationThreshold || '503.15'),
           lastTradeTimestamp: parseInt(token.lastTradeTimestamp || '0')
         }
@@ -116,9 +125,12 @@ export class ApiService {
           symbol: token.symbol || 'UNKNOWN',
           address: token.tokenAddress || token.address,
           price: parseFloat(token.currentPriceAvax || '0'),
+          priceUsd: parseFloat(token.currentPriceUsd || '0'),
           change24h: parseFloat(token.priceChange24h || '0'),
           volume24h: parseFloat(token.volume24h || '0'),
+          volume24hUsd: parseFloat(token.volume24hUsd || '0'),
           marketCap: parseFloat(token.marketCapAvax || '0'),
+          marketCapUsd: parseFloat(token.marketCapUsd || '0'),
           holders: parseInt(token.holders || '0'),
           image: this.getTokenFallbackImage(token.symbol || 'UNKNOWN'),
           tokenId: token.tokenId?.toString() || '0',
@@ -142,6 +154,7 @@ export class ApiService {
           priceHigh24h: parseFloat(token.priceHigh24h || '0'),
           priceLow24h: parseFloat(token.priceLow24h || '0'),
           avaxRaised: parseFloat(token.avaxRaised || '0'),
+          avaxRaisedUsd: parseFloat(token.avaxRaisedUsd || '0'),
           migrationThreshold: parseFloat(token.migrationThreshold || '503.15'),
           lastTradeTimestamp: parseInt(token.lastTradeTimestamp || '0')
         }
@@ -172,9 +185,12 @@ export class ApiService {
           symbol: token.symbol || 'UNKNOWN',
           address: token.tokenAddress || token.address,
           price: parseFloat(token.currentPriceAvax || '0'),
+          priceUsd: parseFloat(token.currentPriceUsd || '0'),
           change24h: parseFloat(token.priceChange24h || '0'),
           volume24h: parseFloat(token.volume24h || '0'),
+          volume24hUsd: parseFloat(token.totalVolumeUsd || '0'),
           marketCap: parseFloat(token.marketCapAvax || '0'),
+          marketCapUsd: parseFloat(token.marketCapUsd || '0'),
           holders: parseInt(token.holders || '0'),
           image: this.getTokenFallbackImage(token.symbol || 'UNKNOWN'),
           tokenId: token.tokenId?.toString() || '0',
@@ -189,6 +205,7 @@ export class ApiService {
           launched: new Date(parseInt(token.deployedAt || '0') * 1000),
           migrationProgress: 100,
           liquidity: parseFloat(token.liquidityAvax || '0'),
+          liquidityUsd: parseFloat(token.liquidityUsd || '0'),
           migrationDate: token.migrationDate || 'Recently',
           
           // New fields from enhanced subgraph
@@ -199,6 +216,7 @@ export class ApiService {
           priceHigh24h: parseFloat(token.priceHigh24h || '0'),
           priceLow24h: parseFloat(token.priceLow24h || '0'),
           avaxRaised: parseFloat(token.avaxRaised || '0'),
+          avaxRaisedUsd: parseFloat(token.avaxRaisedUsd || '0'),
           migrationThreshold: parseFloat(token.migrationThreshold || '503.15'),
           lastTradeTimestamp: parseInt(token.lastTradeTimestamp || '0')
         }

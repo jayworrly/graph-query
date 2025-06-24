@@ -181,8 +181,8 @@ export async function GET(request: NextRequest) {
     const { tokenDeployments, bondingEvents } = subgraphData.data
 
     // Calculate summary statistics
-    const totalVolume = bondingEvents.reduce((sum: bigint, event: any) => 
-      sum + BigInt(event.avaxAmount), 0n
+        const totalVolume = bondingEvents.reduce((sum: bigint, event: any) =>
+      sum + BigInt(event.avaxAmount), BigInt(0)
     ).toString()
 
     const totalTrades = bondingEvents.length

@@ -1,5 +1,5 @@
 import { TokenCreated, Buy, Sell, TokenLPCreated } from "../generated/ArenaTokenFactory/ArenaTokenFactory"
-import { TokenDeployment, BondingEvent, DailyStats, UserActivity, GlobalStats, PriceSnapshot } from "../generated/schema"
+import { TokenDeployment, BondingEvent, DailyStats, UserActivity, GlobalStats, PriceSnapshot, UserTokenPosition, UserPortfolioSnapshot, UserTradingSession } from "../generated/schema"
 import { BigInt, BigDecimal, Address, Bytes } from "@graphprotocol/graph-ts"
 import { ERC20 } from "../generated/ArenaTokenFactory/ERC20"
 
@@ -207,8 +207,10 @@ export function handleBuy(event: Buy): void {
     tokenIdLookup.save()
   }
   
-  // Update user activity
+  // Update user activity and portfolio
   updateUserActivity(event.params.user, avaxAmount, tokenAmount, BigDecimal.fromString("0"), protocolFee.plus(creatorFee).plus(referralFee), event.block.timestamp)
+  updateUserTokenPosition(event.params.user, tokenDeployment, tokenAmount, BigDecimal.fromString("0"), avaxAmount, currentPrice, "BUY", event.block.timestamp)
+  updateTradingSession(event.params.user, avaxAmount, protocolFee.plus(creatorFee).plus(referralFee), avaxAmount, event.block.timestamp)
   
   // Create price snapshot (hourly)
   createPriceSnapshot(tokenDeployment, currentPrice, avaxAmount, event.block.timestamp, "HOURLY")
@@ -323,8 +325,10 @@ export function handleSell(event: Sell): void {
     tokenIdLookupSell.save()
   }
   
-  // Update user activity
+  // Update user activity and portfolio
   updateUserActivity(event.params.user, avaxAmount, BigDecimal.fromString("0"), tokenAmount, protocolFee.plus(creatorFee).plus(referralFee), event.block.timestamp)
+  updateUserTokenPosition(event.params.user, tokenDeployment, BigDecimal.fromString("0"), tokenAmount, avaxAmount, currentPrice, "SELL", event.block.timestamp)
+  updateTradingSession(event.params.user, avaxAmount, protocolFee.plus(creatorFee).plus(referralFee), avaxAmount, event.block.timestamp)
   
   // Create price snapshot (hourly)
   createPriceSnapshot(tokenDeployment, currentPrice, avaxAmount, event.block.timestamp, "HOURLY")
@@ -394,6 +398,23 @@ function updateUserActivity(userAddress: Address, avaxAmount: BigDecimal, tokens
     userActivity.uniqueTokensTraded = 0
     userActivity.firstTradeTimestamp = timestamp
     userActivity.lastTradeTimestamp = timestamp
+    
+    // Initialize portfolio tracking fields
+    userActivity.currentPortfolioValueAvax = BigDecimal.fromString("0")
+    userActivity.totalInvestmentAvax = BigDecimal.fromString("0")
+    userActivity.realizedPnLAvax = BigDecimal.fromString("0")
+    userActivity.unrealizedPnLAvax = BigDecimal.fromString("0")
+    userActivity.totalPnLAvax = BigDecimal.fromString("0")
+    userActivity.winRate = BigDecimal.fromString("0")
+    userActivity.profitableTrades = 0
+    userActivity.losingTrades = 0
+    userActivity.averageProfitPerTrade = BigDecimal.fromString("0")
+    userActivity.averageLossPerTrade = BigDecimal.fromString("0")
+    userActivity.largestWinAvax = BigDecimal.fromString("0")
+    userActivity.largestLossAvax = BigDecimal.fromString("0")
+    userActivity.sharpeRatio = BigDecimal.fromString("0")
+    userActivity.maxDrawdownAvax = BigDecimal.fromString("0")
+    userActivity.portfolioRoi = BigDecimal.fromString("0")
   }
   
   userActivity.totalTrades = userActivity.totalTrades + 1
@@ -402,6 +423,13 @@ function updateUserActivity(userAddress: Address, avaxAmount: BigDecimal, tokens
   userActivity.totalTokensSold = userActivity.totalTokensSold.plus(tokensSold)
   userActivity.totalFeesSpent = userActivity.totalFeesSpent.plus(feesSpent)
   userActivity.lastTradeTimestamp = timestamp
+  
+  // Update investment tracking
+  if (tokensBought.gt(BigDecimal.fromString("0"))) {
+    userActivity.totalInvestmentAvax = userActivity.totalInvestmentAvax.plus(avaxAmount)
+  } else if (tokensSold.gt(BigDecimal.fromString("0"))) {
+    userActivity.totalInvestmentAvax = userActivity.totalInvestmentAvax.minus(avaxAmount)
+  }
   
   userActivity.save()
 }
@@ -487,4 +515,164 @@ function updateGlobalStats(timestamp: BigInt, volume: BigDecimal, isNewToken: bo
   
   globalStats.lastUpdateTimestamp = timestamp
   globalStats.save()
+}
+
+function updateUserTokenPosition(
+  userAddress: Address, 
+  token: TokenDeployment, 
+  tokensBought: BigDecimal, 
+  tokensSold: BigDecimal, 
+  avaxAmount: BigDecimal, 
+  currentPrice: BigDecimal, 
+  tradeType: string, 
+  timestamp: BigInt
+): void {
+  let positionId = userAddress.toHexString() + "-" + token.tokenAddress.toHexString()
+  let position = UserTokenPosition.load(positionId)
+  
+  if (position == null) {
+    position = new UserTokenPosition(positionId)
+    position.user = userAddress.toHexString()
+    position.token = token.id
+    position.currentBalance = BigDecimal.fromString("0")
+    position.currentValueAvax = BigDecimal.fromString("0")
+    position.totalBought = BigDecimal.fromString("0")
+    position.totalSold = BigDecimal.fromString("0")
+    position.totalBuyValueAvax = BigDecimal.fromString("0")
+    position.totalSellValueAvax = BigDecimal.fromString("0")
+    position.averageBuyPrice = BigDecimal.fromString("0")
+    position.averageSellPrice = BigDecimal.fromString("0")
+    position.realizedPnLAvax = BigDecimal.fromString("0")
+    position.unrealizedPnLAvax = BigDecimal.fromString("0")
+    position.totalPnLAvax = BigDecimal.fromString("0")
+    position.percentOfPortfolio = BigDecimal.fromString("0")
+    position.holdingPeriodDays = BigDecimal.fromString("0")
+    position.totalTrades = 0
+    position.totalBuys = 0
+    position.totalSells = 0
+    position.isOpen = false
+    position.firstBuyTimestamp = timestamp
+    position.lastBuyTimestamp = timestamp
+    position.lastSellTimestamp = timestamp
+    position.lastUpdateTimestamp = timestamp
+  }
+  
+  position.totalTrades = position.totalTrades + 1
+  
+  if (tradeType == "BUY") {
+    position.totalBuys = position.totalBuys + 1
+    position.currentBalance = position.currentBalance.plus(tokensBought)
+    position.totalBought = position.totalBought.plus(tokensBought)
+    position.totalBuyValueAvax = position.totalBuyValueAvax.plus(avaxAmount)
+    position.lastBuyTimestamp = timestamp
+    
+    // Update average buy price
+    if (position.totalBought.gt(BigDecimal.fromString("0"))) {
+      position.averageBuyPrice = position.totalBuyValueAvax.div(position.totalBought)
+    }
+    
+    if (position.firstBuyTimestamp.equals(BigInt.fromI32(0))) {
+      position.firstBuyTimestamp = timestamp
+    }
+    
+  } else if (tradeType == "SELL") {
+    position.totalSells = position.totalSells + 1
+    position.currentBalance = position.currentBalance.minus(tokensSold)
+    position.totalSold = position.totalSold.plus(tokensSold)
+    position.totalSellValueAvax = position.totalSellValueAvax.plus(avaxAmount)
+    position.lastSellTimestamp = timestamp
+    
+    // Update average sell price
+    if (position.totalSold.gt(BigDecimal.fromString("0"))) {
+      position.averageSellPrice = position.totalSellValueAvax.div(position.totalSold)
+    }
+    
+    // Calculate realized P&L for this sale
+    let costBasis = tokensSold.times(position.averageBuyPrice)
+    let saleValue = avaxAmount
+    let tradePnL = saleValue.minus(costBasis)
+    position.realizedPnLAvax = position.realizedPnLAvax.plus(tradePnL)
+  }
+  
+  // Update current value and unrealized P&L
+  position.currentValueAvax = position.currentBalance.times(currentPrice)
+  if (position.currentBalance.gt(BigDecimal.fromString("0"))) {
+    let costBasis = position.currentBalance.times(position.averageBuyPrice)
+    position.unrealizedPnLAvax = position.currentValueAvax.minus(costBasis)
+    position.isOpen = true
+  } else {
+    position.unrealizedPnLAvax = BigDecimal.fromString("0")
+    position.isOpen = false
+  }
+  
+  position.totalPnLAvax = position.realizedPnLAvax.plus(position.unrealizedPnLAvax)
+  position.lastUpdateTimestamp = timestamp
+  
+  position.save()
+  
+  // Update user's overall portfolio
+  updateUserPortfolioMetrics(userAddress, timestamp)
+}
+
+function updateUserPortfolioMetrics(userAddress: Address, timestamp: BigInt): void {
+  let userActivity = UserActivity.load(userAddress.toHexString())
+  if (userActivity == null) return
+  
+  // Calculate current portfolio value by summing all positions
+  // Note: In a real implementation, you'd iterate through all user positions
+  // For now, we'll update this in the calling function
+  
+  // Calculate portfolio ROI
+  if (userActivity.totalInvestmentAvax.gt(BigDecimal.fromString("0"))) {
+    userActivity.portfolioRoi = userActivity.totalPnLAvax.div(userActivity.totalInvestmentAvax).times(BigDecimal.fromString("100"))
+  }
+  
+  userActivity.save()
+}
+
+function updateTradingSession(userAddress: Address, avaxAmount: BigDecimal, feesSpent: BigDecimal, pnl: BigDecimal, timestamp: BigInt): void {
+  let dayTimestamp = timestamp.toI32() / 86400
+  let dateString = dayTimestamp.toString()
+  let sessionId = userAddress.toHexString() + "-" + dateString
+  
+  let session = UserTradingSession.load(sessionId)
+  if (session == null) {
+    session = new UserTradingSession(sessionId)
+    session.user = userAddress.toHexString()
+    session.date = dateString
+    session.tradesCount = 0
+    session.volumeAvax = BigDecimal.fromString("0")
+    session.pnlAvax = BigDecimal.fromString("0")
+    session.feesSpent = BigDecimal.fromString("0")
+    session.winningTrades = 0
+    session.losingTrades = 0
+    session.breakEvenTrades = 0
+    session.bestTradeAvax = BigDecimal.fromString("0")
+    session.worstTradeAvax = BigDecimal.fromString("0")
+    session.firstTradeTimestamp = timestamp
+    session.lastTradeTimestamp = timestamp
+  }
+  
+  session.tradesCount = session.tradesCount + 1
+  session.volumeAvax = session.volumeAvax.plus(avaxAmount)
+  session.feesSpent = session.feesSpent.plus(feesSpent)
+  session.lastTradeTimestamp = timestamp
+  
+  // Track P&L (simplified - in reality you'd calculate actual profit/loss per trade)
+  if (pnl.gt(BigDecimal.fromString("0"))) {
+    session.winningTrades = session.winningTrades + 1
+    if (pnl.gt(session.bestTradeAvax)) {
+      session.bestTradeAvax = pnl
+    }
+  } else if (pnl.lt(BigDecimal.fromString("0"))) {
+    session.losingTrades = session.losingTrades + 1
+    if (pnl.lt(session.worstTradeAvax)) {
+      session.worstTradeAvax = pnl
+    }
+  } else {
+    session.breakEvenTrades = session.breakEvenTrades + 1
+  }
+  
+  session.pnlAvax = session.pnlAvax.plus(pnl)
+  session.save()
 } 

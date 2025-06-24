@@ -276,6 +276,9 @@ export default function PulseTable({ type }: PulseTableProps) {
                 {/* Right - Price and Change */}
                 <div className="flex flex-col items-end justify-start">
                   <span className="text-textPrimary text-[16px] font-medium">
+                    ${formatNumber(token.priceUsd || token.price * 35 || 0)}
+                  </span>
+                  <span className="text-textTertiary text-[11px] font-medium">
                     {formatAvax(token.price)} AVAX
                   </span>
                   {token.change24h !== undefined && (
@@ -299,7 +302,7 @@ export default function PulseTable({ type }: PulseTableProps) {
                   <div className="flex flex-col items-start">
                     <span className="text-textTertiary text-[10px] font-medium uppercase tracking-wide">MC</span>
                     <span className="text-textPrimary text-[13px] font-medium">
-                      ${formatNumber(token.marketCap || 0)}
+                      ${formatNumber(token.marketCapUsd || token.marketCap || 0)}
                     </span>
                   </div>
 
@@ -307,12 +310,12 @@ export default function PulseTable({ type }: PulseTableProps) {
                   <div className="flex flex-col items-start">
                     <span className="text-textTertiary text-[10px] font-medium uppercase tracking-wide">Vol 24h</span>
                     <span className="text-textPrimary text-[13px] font-medium">
-                      {formatAvax(token.volume24h || 0)} AVAX
+                      ${formatNumber(token.volume24hUsd || (token.volume24h || 0) * 35)}
                     </span>
                   </div>
 
                   {/* Trades */}
-                  {token.totalTrades !== undefined && (
+                  {(token.totalTrades !== undefined && token.totalTrades > 0) && (
                     <div className="flex flex-col items-start">
                       <span className="text-textTertiary text-[10px] font-medium uppercase tracking-wide">Trades</span>
                       <div className="flex flex-row items-center gap-[4px]">
@@ -325,7 +328,7 @@ export default function PulseTable({ type }: PulseTableProps) {
                   )}
 
                   {/* Traders */}
-                  {token.uniqueTraders !== undefined && (
+                  {(token.uniqueTraders !== undefined && token.uniqueTraders > 0) && (
                     <div className="flex flex-col items-start">
                       <span className="text-textTertiary text-[10px] font-medium uppercase tracking-wide">Traders</span>
                       <div className="flex flex-row items-center gap-[4px]">
@@ -360,7 +363,7 @@ export default function PulseTable({ type }: PulseTableProps) {
                       </span>
                       {token.avaxRaised !== undefined && token.migrationThreshold !== undefined && (
                         <span className="text-textTertiary text-[10px] font-medium">
-                          ({formatAvax(token.avaxRaised)}/{formatAvax(token.migrationThreshold)} AVAX)
+                          (${formatNumber(token.avaxRaisedUsd || token.avaxRaised * 35)}/${formatNumber((token.migrationThreshold || 503.15) * 35)})
                         </span>
                       )}
                     </div>
@@ -385,7 +388,7 @@ export default function PulseTable({ type }: PulseTableProps) {
                   </div>
                   {token.liquidity !== undefined && (
                     <span className="text-textTertiary text-[11px] font-medium">
-                      Liquidity: {formatAvax(token.liquidity)} AVAX
+                      Liquidity: ${formatNumber(token.liquidityUsd || token.liquidity * 35)}
                     </span>
                   )}
                 </div>

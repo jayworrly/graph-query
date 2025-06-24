@@ -1,40 +1,21 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Dependencies
 node_modules/
 */node_modules/
-**/node_modules/
-/.pnp
-.pnp.js
-
-# Testing
-/coverage
-
-# Next.js
-/.next/
-/out/
-.next
-**/.next/
-
-# Production
-/build
-
-# Misc
-.DS_Store
-*.tsbuildinfo
-next-env.d.ts
-
-# Local env files
-.env*.local
-.env
-
-# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Cache directories
-.cache/
-**/.cache/
-**/cache/
+# Next.js
+.next/
+out/
+build/
 
 # Python
 __pycache__/
@@ -47,9 +28,16 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-*.egg-info/
-.installed.cfg
-*.egg
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+*.log.*
 
 # IDE
 .vscode/
@@ -67,8 +55,22 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Large binary files
-*.node
-*.dll
-*.exe
-*.dmg 
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Build artifacts
+dist/
+build/
+generated/
+
+# Graph Node
+data/
+ipfs/
+postgres/
+
+# Subgraph
+subgraph.yaml.backup
+networks.json.backup 
