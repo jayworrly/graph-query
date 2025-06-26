@@ -1,4 +1,4 @@
-import { createPublicClient, http, formatUnits, getContract, parseAbiItem } from 'viem'
+import { createPublicClient, http, formatUnits, parseAbiItem } from 'viem'
 import { avalanche } from 'viem/chains'
 import { config } from '../config'
 
@@ -248,33 +248,43 @@ class BlockchainService {
 
   private async getTokenDetails(tokenAddress: string) {
     try {
-      const contract = getContract({
-        address: tokenAddress as `0x${string}`,
-        abi: TOKEN_ABI,
-        publicClient: this.client
-      })
-
       // Try different approaches to get token metadata
       let name = null
       let symbol = null
       
       try {
-        name = await contract.read.name()
+        name = await this.client.readContract({
+          address: tokenAddress as `0x${string}`,
+          abi: TOKEN_ABI,
+          functionName: 'name'
+        })
         console.log(`Got name for ${tokenAddress}: "${name}"`)
       } catch (error) {
         console.log(`Failed to get name for ${tokenAddress}:`, error.shortMessage || error.message)
       }
       
       try {
-        symbol = await contract.read.symbol()
+        symbol = await this.client.readContract({
+          address: tokenAddress as `0x${string}`,
+          abi: TOKEN_ABI,
+          functionName: 'symbol'
+        })
         console.log(`Got symbol for ${tokenAddress}: "${symbol}"`)
       } catch (error) {
         console.log(`Failed to get symbol for ${tokenAddress}:`, error.shortMessage || error.message)
       }
 
       const [decimals, totalSupply] = await Promise.all([
-        contract.read.decimals().catch(() => 18),
-        contract.read.totalSupply().catch(() => BigInt('1000000000000000000000000000'))
+        this.client.readContract({
+          address: tokenAddress as `0x${string}`,
+          abi: TOKEN_ABI,
+          functionName: 'decimals'
+        }).catch(() => 18),
+        this.client.readContract({
+          address: tokenAddress as `0x${string}`,
+          abi: TOKEN_ABI,
+          functionName: 'totalSupply'
+        }).catch(() => BigInt('1000000000000000000000000000'))
       ])
 
       // If we got any real data from the contract, use it
@@ -372,16 +382,22 @@ class BlockchainService {
 
   private async getPairData(pairAddress: string, tokenAddress: string) {
     try {
-      const pairContract = getContract({
-        address: pairAddress as `0x${string}`,
-        abi: PAIR_ABI,
-        publicClient: this.client
-      })
-
       const [reserves, token0, token1] = await Promise.all([
-        pairContract.read.getReserves(),
-        pairContract.read.token0(),
-        pairContract.read.token1()
+        this.client.readContract({
+          address: pairAddress as `0x${string}`,
+          abi: PAIR_ABI,
+          functionName: 'getReserves'
+        }),
+        this.client.readContract({
+          address: pairAddress as `0x${string}`,
+          abi: PAIR_ABI,
+          functionName: 'token0'
+        }),
+        this.client.readContract({
+          address: pairAddress as `0x${string}`,
+          abi: PAIR_ABI,
+          functionName: 'token1'
+        })
       ])
 
       // Calculate price based on reserves
@@ -426,7 +442,7 @@ class BlockchainService {
         address: TARGET_ADDRESS as `0x${string}`,
         event: TOKEN_CREATED_EVENT_ABI,
         fromBlock,
-        toBlock: 'latest'
+        toBlock: currentBlock // Use current block instead of 'latest'
       })
       console.log('Token created logs:', tokenCreatedLogs.length)
 
@@ -435,7 +451,7 @@ class BlockchainService {
         address: ARENA_FACTORY as `0x${string}`,
         event: PAIR_CREATED_EVENT_ABI,
         fromBlock,
-        toBlock: 'latest'
+        toBlock: currentBlock // Use current block instead of 'latest'
       })
       console.log('Pair created logs:', pairCreatedLogs.length)
 
@@ -465,4 +481,4 @@ class BlockchainService {
   }
 }
 
-export const blockchainService = new BlockchainService() 
+export const blockchainService = new BlockchainService()

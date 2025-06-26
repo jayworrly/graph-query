@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 from setup_graph_database import get_graph_db_connection
 from sqlalchemy import text
 

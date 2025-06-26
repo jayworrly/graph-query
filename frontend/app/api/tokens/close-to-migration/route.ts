@@ -95,15 +95,15 @@ export async function GET(request: NextRequest) {
     }
 
     const allTokens = subgraphData.data.tokenDeployments
-    console.log(`Total BONDING tokens from subgraph: ${allTokens.length}`)
+    // console.log(`Total BONDING tokens from subgraph: ${allTokens.length}`)
     
     // Debug sample tokens to understand data format
     if (allTokens.length > 0) {
-      console.log('Sample BONDING token data:')
+      // console.log('Sample BONDING token data:')
       allTokens.slice(0, 3).forEach((token: any, i: number) => {
         const progress = parseFloat(token.bondingProgress || '0')
         const avaxRaised = parseFloat(token.avaxRaised || '0')
-        console.log(`${i + 1}. ${token.name || 'Unnamed'} - Progress: ${progress}%, AVAX: ${avaxRaised}, Status: ${token.migrationStatus}`)
+        // console.log(`${i + 1}. ${token.name || 'Unnamed'} - Progress: ${progress}%, AVAX: ${avaxRaised}, Status: ${token.migrationStatus}`)
       })
     }
 
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       return acc
     }, [])
 
-    console.log(`Unique tokens after deduplication: ${uniqueTokens.length}`)
+    // console.log(`Unique tokens after deduplication: ${uniqueTokens.length}`)
 
     // Filter for tokens close to migration
     const filteredTokens = uniqueTokens.filter((token: any) => {
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
       return isCloseByProgress || isCloseByAvax
     })
     
-    console.log(`Tokens close to migration (${minProgressPercent}-${maxProgressPercent}% or 300+ AVAX): ${filteredTokens.length}`)
+    // console.log(`Tokens close to migration (${minProgressPercent}-${maxProgressPercent}% or 300+ AVAX): ${filteredTokens.length}`)
 
     // Get current AVAX price for USD conversions
     const avaxPrice = await priceService.getAvaxPrice()

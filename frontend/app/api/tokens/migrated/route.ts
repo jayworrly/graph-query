@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
       const currentPrice = FINAL_PRICE * (1 + Math.random() * 0.5) // Some variation post-migration
       const marketCap = currentPrice * TOTAL_SUPPLY
       
-      console.log(`Migrated Token ${token.name}: Price: ${currentPrice.toFixed(6)} AVAX, MC: ${marketCap.toFixed(2)} AVAX`)
+      // console.log(`Migrated Token ${token.name}: Price: ${currentPrice.toFixed(6)} AVAX, MC: ${marketCap.toFixed(2)} AVAX`)
       
       return {
         address: token.tokenAddress,

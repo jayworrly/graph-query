@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Search, RefreshCw, Zap, TrendingUp, Settings, Bell, User, ExternalLink } from 'lucide-react'
+import { BarChart3, Search, RefreshCw, Zap, TrendingUp, Settings, Bell, User, ExternalLink, Brain } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Navigation() {
@@ -67,6 +67,19 @@ export default function Navigation() {
                 <div className="flex items-center space-x-2">
                   <Search className="h-4 w-4" />
                   <span>Explore</span>
+                </div>
+              </Link>
+              <Link
+                href="/intel"
+                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  pathname === '/intel' || pathname?.startsWith('/intel/')
+                    ? 'bg-gradient-to-r from-primaryBlue to-primaryPurple text-white shadow-lg shadow-primaryBlue/25'
+                    : 'text-textSecondary hover:text-textPrimary hover:bg-primaryStroke/30'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Brain className="h-4 w-4" />
+                  <span>Intel</span>
                 </div>
               </Link>
               <button

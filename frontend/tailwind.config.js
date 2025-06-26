@@ -23,6 +23,8 @@ module.exports = {
         'primaryLightBlue': '#c084fc',
         'primaryGreen': '#22c55e',
         'primaryYellow': '#f59e0b',
+        'primaryGold': '#f59e0b',
+        'primaryOrange': '#f97316',
         'virtualCurve': '#8b5cf6',
         'pump': '#f59e0b',
         'increase': '#22c55e',

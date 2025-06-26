@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     }
 
     const allTokens = subgraphData.data.tokenDeployments
-    console.log(`Total new tokens from subgraph: ${allTokens.length}`)
+    // console.log(`Total new tokens from subgraph: ${allTokens.length}`)
 
     // Remove duplicates by keeping the most recent deployment for each token address
     const uniqueTokens = allTokens.reduce((acc: any[], token: any) => {
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       return acc
     }, [])
 
-    console.log(`Unique new tokens: ${uniqueTokens.length}`)
+    // console.log(`Unique new tokens: ${uniqueTokens.length}`)
 
     // Get current AVAX price for USD conversions
     const avaxPrice = await priceService.getAvaxPrice()
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       const circulatingSupply = totalSupplyTokens * 0.8 // Assume 80% of supply is tradeable
       const marketCap = Math.max(currentPrice * circulatingSupply, avaxRaised * 10) // Ensure MC is at least 10x raised amount
       
-      console.log(`Token ${token.name}: AVAX: ${avaxRaised.toFixed(2)}, Progress: ${progressPercent.toFixed(1)}%, Price: ${currentPrice.toFixed(6)} AVAX, MC: ${marketCap.toFixed(2)} AVAX`)
+      // console.log(`Token ${token.name}: AVAX: ${avaxRaised.toFixed(2)}, Progress: ${progressPercent.toFixed(1)}%, Price: ${currentPrice.toFixed(6)} AVAX, MC: ${marketCap.toFixed(2)} AVAX`)
       
       return {
         tokenAddress: token.tokenAddress,

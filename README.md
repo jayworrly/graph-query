@@ -44,6 +44,69 @@ Arena Terminal/
 └── migrate_addresses.py     # Database migration tools
 ```
 
+## 📁 Project Structure (Updated)
+
+```
+graph_query/
+├── scripts/
+│   ├── analysis/          # Profit/loss analysis tools
+│   │   ├── enhanced_profit_analysis.py    # Main P&L analysis with wallet labels
+│   │   ├── quick_profit_analysis.py       # Fast aggregate analysis
+│   │   ├── manual_pnl_calculator.py       # FIFO-based P&L calculation
+│   │   ├── wallet_profit_analysis.py      # User activity table analysis
+│   │   ├── lookup_specific_wallet.py      # Individual wallet lookup
+│   │   └── profit_loss_analysis.sql       # SQL queries for P&L
+│   ├── import/           # Wallet import and labeling tools  
+│   │   ├── fix_arena_import.py            # Import Arena users with labels
+│   │   ├── wallet_import_setup.py         # Setup wallet_labels table
+│   │   └── import_avalanche_wallets.py    # Generic wallet import tool
+│   ├── utils/            # Database utilities
+│   │   ├── check_data.py                  # Database validation
+│   │   ├── check_schema.py                # Schema validation
+│   │   └── migrate_addresses.py           # Address migration
+│   └── README.md         # Script documentation
+├── data/
+│   └── exports/          # CSV exports and analysis results
+├── frontend/             # Next.js web interface
+├── arena-tracker/        # Subgraph definitions
+├── setup_graph_database.py  # Main database setup
+├── sync_subgraph_to_db.py   # Subgraph data sync
+└── README.md
+```
+
+## 🚀 Quick Start (Updated)
+
+### 1. **Database Setup:**
+```bash
+python setup_graph_database.py
+python sync_subgraph_to_db.py
+```
+
+### 2. **Wallet Labeling System:**
+```bash
+python scripts/import/wallet_import_setup.py
+python scripts/import/fix_arena_import.py
+```
+
+### 3. **Run Profit/Loss Analysis:**
+```bash
+# Main analysis with wallet labels
+python scripts/analysis/enhanced_profit_analysis.py
+
+# Quick aggregate analysis
+python scripts/analysis/quick_profit_analysis.py
+
+# Look up specific wallet
+python scripts/analysis/lookup_specific_wallet.py
+```
+
+### 4. **Frontend Dashboard:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 ## 🛠️ Installation
 
 ### Prerequisites
