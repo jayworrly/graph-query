@@ -251,6 +251,131 @@ type GlobalStats @entity(immutable: false) {
   lastUpdateTimestamp: BigInt!
 }
 
+type ParaswapTrade @entity(immutable: true) {
+  id: ID! # txHash-logIndex
+  uuid: Bytes! # Paraswap's unique identifier
+  
+  # Trade participants
+  initiator: Bytes! # Who initiated the swap
+  beneficiary: Bytes! # Who received the tokens
+  partner: Bytes # Partner address (if any)
+  
+  # Token information
+  srcToken: Bytes! # Source token address
+  destToken: Bytes! # Destination token address
+  srcAmount: BigDecimal! # Amount of source tokens
+  receivedAmount: BigDecimal! # Amount of destination tokens received
+  expectedAmount: BigDecimal! # Expected amount (for slippage calculation)
+  
+  # Trade analysis
+  tradeType: ParaswapTradeType! # SWAPPED, BOUGHT, or SOLD
+  isBuy: Boolean! # True if buying Arena tokens, false if selling
+  
+  # Enhanced Arena Token Detection
+  srcTokenIsArena: Boolean! # True if source token is Arena token
+  destTokenIsArena: Boolean! # True if dest token is Arena token
+  arenaToken: TokenDeployment # Reference to Arena token if involved
+  
+  # Price and slippage
+  priceRatio: BigDecimal! # receivedAmount / srcAmount
+  slippagePercent: BigDecimal! # (expectedAmount - receivedAmount) / expectedAmount * 100
+  
+  # Fees
+  feePercent: BigDecimal! # Fee percentage charged
+  feeAmount: BigDecimal! # Actual fee amount in source token
+  
+  # AVAX value tracking
+  avaxValueIn: BigDecimal! # AVAX value of input (if calculable)
+  avaxValueOut: BigDecimal! # AVAX value of output (if calculable)
+  estimatedUsdValue: BigDecimal! # Estimated USD value
+  
+  # Context
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+  gasPrice: BigInt!
+  gasUsed: BigInt!
+  
+  # Performance tracking
+  processingLatency: BigInt! # Time between trade and indexing
+}
+
+type ArenaTokenParaswapStats @entity(immutable: false) {
+  id: ID! # token address
+  token: TokenDeployment!
+  
+  # Paraswap Trading Volume
+  totalParaswapTrades: Int!
+  totalParaswapVolumeAvax: BigDecimal!
+  totalBuyVolumeAvax: BigDecimal!
+  totalSellVolumeAvax: BigDecimal!
+  
+  # Recent activity (24h)
+  trades24h: Int!
+  volume24hAvax: BigDecimal!
+  
+  # Price tracking from Paraswap
+  lastParaswapPrice: BigDecimal!
+  priceHigh24h: BigDecimal!
+  priceLow24h: BigDecimal!
+  
+  # Liquidity indicators
+  averageSlippage: BigDecimal!
+  largestTrade: BigDecimal!
+  
+  # Timestamps
+  firstParaswapTrade: BigInt!
+  lastParaswapTrade: BigInt!
+  lastUpdateTimestamp: BigInt!
+}
+
+type RealTimeTradeAlert @entity(immutable: true) {
+  id: ID! # txHash-timestamp
+  
+  # Trade details
+  paraswapTrade: ParaswapTrade
+  bondingEvent: BondingEvent
+  
+  # Alert criteria
+  alertType: TradeAlertType!
+  significance: TradeSignificance! # SMALL, MEDIUM, LARGE, WHALE
+  
+  # Metrics
+  tradeValueAvax: BigDecimal!
+  priceImpact: BigDecimal!
+  volumeRatio: BigDecimal! # Trade size vs 24h volume
+  
+  # Context
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+enum ParaswapTradeType {
+  SWAPPED
+  BOUGHT
+  SOLD
+}
+
+type PostBondingTrade @entity(immutable: true) {
+  id: ID! # txHash-logIndex
+  tokenAddress: Bytes! # The token being traded
+  from: Bytes! # Sender address
+  to: Bytes! # Receiver address
+  amount: BigDecimal! # Amount of tokens transferred
+  
+  # Context
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+  gasPrice: BigInt!
+  gasUsed: BigInt!
+  
+  # Trading Analysis
+  isLikelyTrade: Boolean! # Whether this looks like a trade vs transfer
+  tradingPair: Bytes # If identifiable, the trading pair address
+  estimatedAvaxValue: BigDecimal # Estimated AVAX value if calculable
+}
+
 enum MigrationStatus {
   BONDING
   CLOSE_TO_MIGRATION
@@ -265,4 +390,20 @@ enum TradeType {
 enum SnapshotPeriod {
   HOURLY
   DAILY
+}
+
+enum TradeAlertType {
+  LARGE_BUY
+  LARGE_SELL
+  HIGH_SLIPPAGE
+  PRICE_MOVEMENT
+  NEW_TOKEN_FIRST_TRADE
+  WHALE_ACTIVITY
+}
+
+enum TradeSignificance {
+  SMALL      # < 1 AVAX
+  MEDIUM     # 1-10 AVAX  
+  LARGE      # 10-100 AVAX
+  WHALE      # > 100 AVAX
 }

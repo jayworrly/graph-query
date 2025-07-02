@@ -32,5 +32,5 @@ export const config = {
   },
   
   // Arena Subgraph endpoint
-  arenaSubgraphUrl: process.env.ARENA_SUBGRAPH_URL || 'https://api.studio.thegraph.com/query/18408/arena-tracker/v0.0.5'
+  arenaSubgraphUrl: process.env.ARENA_SUBGRAPH_URL || 'https://api.studio.thegraph.com/query/18408/arena-tracker/v0.1.0'
 } 

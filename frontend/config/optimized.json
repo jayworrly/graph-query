@@ -1,0 +1,25 @@
+{
+  "subgraph": {
+    "endpoint": "http://localhost:8000/subgraphs/name/arena-tracker",
+    "backup_endpoints": [
+      "https://api.thegraph.com/subgraphs/name/your-username/arena-tracker"
+    ]
+  },
+  "database": {
+    "connection_pool_size": 20,
+    "query_timeout": 30000,
+    "enable_caching": true,
+    "cache_ttl": 300
+  },
+  "features": {
+    "real_time_alerts": true,
+    "paraswap_analytics": true,
+    "whale_tracking": true,
+    "price_notifications": true
+  },
+  "performance": {
+    "lazy_loading": true,
+    "pagination_size": 50,
+    "refresh_interval": 10000
+  }
+}
