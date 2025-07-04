@@ -407,3 +407,14 @@ enum TradeSignificance {
   LARGE      # 10-100 AVAX
   WHALE      # > 100 AVAX
 }
+
+type ArenaTokenTransfer @entity(immutable: true) {
+  id: ID!
+  token: Bytes!
+  from: Bytes!
+  to: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+  type: String! # "BUY" or "SELL"
+}

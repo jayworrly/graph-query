@@ -17,21 +17,22 @@ export async function GET(request: NextRequest) {
     const client = await pool.connect()
 
     try {
-      // Search for wallets by address or label
+      // Search for ParaSwap users by address, include their trading stats
       const searchQuery = `
-        SELECT DISTINCT
-          wl.wallet_address,
+        SELECT 
+          pau.real_user as address,
           wl.label,
-          COUNT(be.id) as trade_count,
-          MAX(be.timestamp) as last_activity
-        FROM wallet_labels wl
-        LEFT JOIN bonding_events be ON LOWER(be.user_address) = LOWER(wl.wallet_address)
-        WHERE 
-          LOWER(wl.wallet_address) LIKE LOWER($1) OR
-          LOWER(wl.label) LIKE LOWER($1)
-        GROUP BY wl.wallet_address, wl.label
+          COUNT(*) as trade_count,
+          SUM(CASE WHEN pau.label = 'BUY' THEN 1 ELSE 0 END) as buy_count,
+          SUM(CASE WHEN pau.label = 'SELL' THEN 1 ELSE 0 END) as sell_count,
+          COUNT(DISTINCT pau.token_address) as unique_tokens,
+          MAX(pau.created_at) as last_activity
+        FROM paraswap_arena_users pau
+        LEFT JOIN wallet_labels wl ON LOWER(wl.wallet_address) = LOWER(pau.real_user)
+        WHERE LOWER(pau.real_user) LIKE LOWER($1) OR LOWER(wl.label) LIKE LOWER($1)
+        GROUP BY pau.real_user, wl.label
         ORDER BY 
-          CASE WHEN LOWER(wl.wallet_address) = LOWER($2) THEN 1 ELSE 2 END,
+          CASE WHEN LOWER(pau.real_user) = LOWER($2) THEN 1 ELSE 2 END,
           trade_count DESC,
           last_activity DESC NULLS LAST
         LIMIT $3
@@ -42,18 +43,22 @@ export async function GET(request: NextRequest) {
 
       const result = await client.query(searchQuery, [searchPattern, exactQuery, limit])
 
-      const wallets = result.rows.map(row => ({
-        address: row.wallet_address,
+      const users = result.rows.map(row => ({
+        address: row.address,
         label: row.label,
         tradeCount: parseInt(row.trade_count || '0'),
+        buyCount: parseInt(row.buy_count || '0'),
+        sellCount: parseInt(row.sell_count || '0'),
+        uniqueTokens: parseInt(row.unique_tokens || '0'),
         lastActivity: row.last_activity ? new Date(row.last_activity).toLocaleDateString() : null
       }))
 
       return NextResponse.json({
         success: true,
         data: {
-          wallets,
-          total: wallets.length
+          users,
+          total: users.length,
+          source: 'paraswap'
         }
       })
 
@@ -62,10 +67,10 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Wallet search API error:', error)
+    console.error('ParaSwap user search API error:', error)
     return NextResponse.json({
       success: false,
-      error: 'Failed to search wallets'
+      error: 'Failed to search ParaSwap users'
     }, { status: 500 })
   }
 } 

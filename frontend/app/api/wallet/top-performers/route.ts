@@ -5,84 +5,84 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '20')
-    const metric = searchParams.get('metric') || 'pnl' // pnl, volume, trades, winrate
+    const metric = searchParams.get('metric') || 'trades' // trades, tokens, activity
 
     const client = await pool.connect()
 
     try {
       let orderClause = ''
       switch (metric) {
-        case 'volume':
-          orderClause = 'total_volume DESC'
+        case 'tokens':
+          orderClause = 'unique_tokens DESC, total_trades DESC'
           break
-        case 'trades':
-          orderClause = 'total_trades DESC'
+        case 'activity':
+          orderClause = 'trading_days DESC, total_trades DESC'
           break
-        case 'winrate':
-          orderClause = 'win_rate DESC, total_trades DESC'
+        case 'buys':
+          orderClause = 'buy_trades DESC'
+          break
+        case 'sells':
+          orderClause = 'sell_trades DESC'
           break
         default:
-          orderClause = 'total_pnl DESC'
+          orderClause = 'total_trades DESC'
       }
 
       const topPerformersQuery = `
-        WITH wallet_performance AS (
+        WITH user_performance AS (
           SELECT 
-            be.user_address,
+            pau.real_user,
             COUNT(*) as total_trades,
-            SUM(be.avax_amount) as total_volume,
-            SUM(CASE WHEN be.trade_type = 'BUY' THEN 1 ELSE 0 END) as buy_trades,
-            SUM(CASE WHEN be.trade_type = 'SELL' THEN 1 ELSE 0 END) as sell_trades,
-            MIN(be.timestamp) as first_trade,
-            MAX(be.timestamp) as last_trade
-          FROM bonding_events be
-          GROUP BY be.user_address
-          HAVING COUNT(*) >= 5  -- Only include wallets with at least 5 trades
+            SUM(CASE WHEN pau.label = 'BUY' THEN 1 ELSE 0 END) as buy_trades,
+            SUM(CASE WHEN pau.label = 'SELL' THEN 1 ELSE 0 END) as sell_trades,
+            COUNT(DISTINCT pau.token_address) as unique_tokens,
+            COUNT(DISTINCT pau.tx_hash) as unique_transactions,
+            COUNT(DISTINCT DATE(pau.created_at)) as trading_days,
+            MIN(pau.block_number) as first_block,
+            MAX(pau.block_number) as last_block,
+            MIN(pau.created_at) as first_trade,
+            MAX(pau.created_at) as last_trade
+          FROM paraswap_arena_users pau
+          GROUP BY pau.real_user
+          HAVING COUNT(*) >= 10  -- Only include users with at least 10 trades
         ),
-        wallet_pnl AS (
-          SELECT 
-            user_address,
-            SUM(realized_pnl) as total_pnl,
-            COUNT(CASE WHEN realized_pnl > 0 THEN 1 END) as profitable_positions,
-            COUNT(CASE WHEN realized_pnl < 0 THEN 1 END) as losing_positions,
-            AVG(realized_pnl) as avg_pnl,
-            MAX(realized_pnl) as best_trade,
-            MIN(realized_pnl) as worst_trade
-          FROM (
-            SELECT 
-              user_address,
-              token_address,
-              SUM(CASE WHEN trade_type = 'BUY' THEN -avax_amount ELSE avax_amount END) as realized_pnl
-            FROM bonding_events 
-            GROUP BY user_address, token_address
-            HAVING SUM(CASE WHEN trade_type = 'BUY' THEN -1 ELSE 1 END) >= 0  -- Only closed positions
-          ) pnl_calc
-          GROUP BY user_address
+        user_top_token AS (
+          SELECT DISTINCT ON (real_user)
+            real_user,
+            token_address as favorite_token,
+            COUNT(*) as favorite_token_trades
+          FROM paraswap_arena_users
+          GROUP BY real_user, token_address
+          ORDER BY real_user, COUNT(*) DESC
         )
         SELECT 
-          wp.user_address,
+          up.real_user,
           wl.label,
-          wp.total_trades,
-          wp.total_volume,
-          wp.buy_trades,
-          wp.sell_trades,
-          wpnl.total_pnl,
-          wpnl.profitable_positions,
-          wpnl.losing_positions,
-          wpnl.avg_pnl,
-          wpnl.best_trade,
-          wpnl.worst_trade,
+          up.total_trades,
+          up.buy_trades,
+          up.sell_trades,
+          up.unique_tokens,
+          up.unique_transactions,
+          up.trading_days,
+          up.first_block,
+          up.last_block,
+          up.first_trade,
+          up.last_trade,
+          utt.favorite_token,
+          utt.favorite_token_trades,
           CASE 
-            WHEN wpnl.profitable_positions + wpnl.losing_positions > 0 
-            THEN (wpnl.profitable_positions::float / (wpnl.profitable_positions + wpnl.losing_positions) * 100)
+            WHEN up.total_trades > 0 
+            THEN (up.buy_trades::float / up.total_trades * 100)
             ELSE 0 
-          END as win_rate,
-          wp.first_trade,
-          wp.last_trade
-        FROM wallet_performance wp
-        JOIN wallet_pnl wpnl ON wp.user_address = wpnl.user_address
-        LEFT JOIN wallet_labels wl ON LOWER(wl.wallet_address) = LOWER(wp.user_address)
-        WHERE wpnl.total_pnl IS NOT NULL
+          END as buy_percentage,
+          CASE 
+            WHEN up.trading_days > 0 
+            THEN (up.total_trades::float / up.trading_days)
+            ELSE 0 
+          END as trades_per_day
+        FROM user_performance up
+        LEFT JOIN wallet_labels wl ON LOWER(wl.wallet_address) = LOWER(up.real_user)
+        LEFT JOIN user_top_token utt ON up.real_user = utt.real_user
         ORDER BY ${orderClause}
         LIMIT $1
       `
@@ -90,17 +90,20 @@ export async function GET(request: NextRequest) {
       const result = await client.query(topPerformersQuery, [limit])
 
       const topPerformers = result.rows.map(row => ({
-        address: row.user_address,
+        address: row.real_user,
         label: row.label,
-        totalPnl: parseFloat(row.total_pnl || '0'),
         totalTrades: parseInt(row.total_trades || '0'),
-        totalVolume: parseFloat(row.total_volume || '0'),
-        winRate: parseFloat(row.win_rate || '0'),
-        profitablePositions: parseInt(row.profitable_positions || '0'),
-        losingPositions: parseInt(row.losing_positions || '0'),
-        avgPnl: parseFloat(row.avg_pnl || '0'),
-        bestTrade: parseFloat(row.best_trade || '0'),
-        worstTrade: parseFloat(row.worst_trade || '0'),
+        buyTrades: parseInt(row.buy_trades || '0'),
+        sellTrades: parseInt(row.sell_trades || '0'),
+        buyPercentage: parseFloat(row.buy_percentage || '0'),
+        uniqueTokens: parseInt(row.unique_tokens || '0'),
+        uniqueTransactions: parseInt(row.unique_transactions || '0'),
+        tradingDays: parseInt(row.trading_days || '0'),
+        tradesPerDay: parseFloat(row.trades_per_day || '0'),
+        favoriteToken: row.favorite_token,
+        favoriteTokenTrades: parseInt(row.favorite_token_trades || '0'),
+        firstBlock: parseInt(row.first_block || '0'),
+        lastBlock: parseInt(row.last_block || '0'),
         firstTrade: row.first_trade ? new Date(row.first_trade).toLocaleDateString() : null,
         lastTrade: row.last_trade ? new Date(row.last_trade).toLocaleDateString() : null
       }))
@@ -110,7 +113,8 @@ export async function GET(request: NextRequest) {
         data: {
           performers: topPerformers,
           metric: metric,
-          total: topPerformers.length
+          total: topPerformers.length,
+          source: 'paraswap'
         }
       })
 
@@ -119,10 +123,10 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Top performers API error:', error)
+    console.error('ParaSwap top performers API error:', error)
     return NextResponse.json({
       success: false,
-      error: 'Failed to fetch top performers'
+      error: 'Failed to fetch ParaSwap top performers'
     }, { status: 500 })
   }
-} 
+}
